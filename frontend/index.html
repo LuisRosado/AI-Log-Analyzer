@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>AI Log Analyzer</title>
+
+<style>
+
+body{
+  font-family: Arial;
+  max-width: 900px;
+  margin:auto;
+  padding:20px;
+}
+
+textarea{
+  width:100%;
+  height:200px;
+}
+
+button{
+  margin-top:10px;
+  padding:10px;
+  cursor:pointer;
+}
+
+.result{
+  background:#f4f4f4;
+  padding:20px;
+  margin-top:20px;
+  border-radius:8px;
+}
+
+.loading{
+  margin-top:20px;
+  font-weight:bold;
+}
+
+.badge{
+  padding:6px 10px;
+  border-radius:6px;
+  color:white;
+  font-weight:bold;
+}
+
+.high{
+  background:#e74c3c;
+}
+
+.medium{
+  background:#f39c12;
+}
+
+.low{
+  background:#2ecc71;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>AI Log Analyzer</h1>
+
+<h3>Paste Logs</h3>
+
+<textarea id="logs"></textarea>
+
+<br>
+
+<button onclick="analyzeLogs()">Analyze Logs</button>
+
+<h3>Upload Log File</h3>
+
+<input type="file" id="fileInput">
+<button onclick="uploadFile()">Analyze File</button>
+
+<div class="loading" id="loading"></div>
+
+<div class="result" id="result"></div>
+
+<script>
+
+
+async function analyzeLogs(){
+
+    const logs = document.getElementById("logs").value
+
+    document.getElementById("loading").innerText = "Analyzing logs with AI..."
+
+    const response = await fetch("/analyze",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body: JSON.stringify({logs})
+    })
+
+    const data = await response.json()
+
+    document.getElementById("loading").innerText = ""
+
+    renderResult(data)
+
+}
+
+
+async function uploadFile(){
+
+    const fileInput = document.getElementById("fileInput")
+
+    const formData = new FormData()
+
+    formData.append("file", fileInput.files[0])
+
+    document.getElementById("loading").innerText = "Analyzing file..."
+
+    const response = await fetch("/analyze-file",{
+        method:"POST",
+        body: formData
+    })
+
+    const data = await response.json()
+
+    document.getElementById("loading").innerText = ""
+
+    renderResult(data)
+
+}
+
+
+function severityBadge(level){
+
+  if(!level) return ""
+
+  const l = level.toLowerCase()
+
+  if(l === "high") return `<span class="badge high">HIGH</span>`
+  if(l === "medium") return `<span class="badge medium">MEDIUM</span>`
+  if(l === "low") return `<span class="badge low">LOW</span>`
+
+  return level
+}
+
+
+function renderResult(data){
+
+document.getElementById("result").innerHTML = `
+
+<h2>AI Analysis</h2>
+
+<b>Summary:</b>
+<p>${data.summary}</p>
+
+<b>Root Cause:</b>
+<p>${data.root_cause}</p>
+
+<b>Severity:</b>
+<p>${severityBadge(data.severity)}</p>
+
+<b>Recommendations:</b>
+<ul>
+${(data.recommendations || []).map(r => `<li>${r}</li>`).join("")}
+</ul>
+
+<hr>
+
+<h2>Statistics</h2>
+
+<p>Error Count: ${data.error_count}</p>
+<p>Warning Count: ${data.warning_count}</p>
+<p>Timeout Count: ${data.timeout_count}</p>
+<p>Error Rate: ${data.error_rate}</p>
+
+<hr>
+
+<h2>Patterns</h2>
+
+<ul>
+${(data.patterns || []).map(p => `<li>${p.pattern} (${p.occurrences})</li>`).join("")}
+</ul>
+
+`
+}
+
+</script>
+
+</body>
+</html>
