@@ -1,190 +1,1158 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Log Analyzer</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #0a0a0b;
+      --bg-secondary: #131316;
+      --bg-card: #1a1a1f;
+      --bg-input: #0f0f12;
+      --border-color: #2a2a30;
+      --border-hover: #3a3a42;
+      --text-primary: #fafafa;
+      --text-secondary: #a0a0a8;
+      --text-muted: #6a6a72;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --accent-glow: rgba(59, 130, 246, 0.15);
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
 
-<title>AI Log Analyzer</title>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-<style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
 
-body{
-  font-family: Arial;
-  max-width: 900px;
-  margin:auto;
-  padding:20px;
-}
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
 
-textarea{
-  width:100%;
-  height:200px;
-}
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
 
-button{
-  margin-top:10px;
-  padding:10px;
-  cursor:pointer;
-}
+    .header-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      box-shadow: 0 8px 32px var(--accent-glow);
+    }
 
-.result{
-  background:#f4f4f4;
-  padding:20px;
-  margin-top:20px;
-  border-radius:8px;
-}
+    .header-icon svg {
+      width: 32px;
+      height: 32px;
+      color: white;
+    }
 
-.loading{
-  margin-top:20px;
-  font-weight:bold;
-}
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
 
-.badge{
-  padding:6px 10px;
-  border-radius:6px;
-  color:white;
-  font-weight:bold;
-}
+    .header p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
 
-.high{
-  background:#e74c3c;
-}
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+      transition: border-color 0.2s ease;
+    }
 
-.medium{
-  background:#f39c12;
-}
+    .card:hover {
+      border-color: var(--border-hover);
+    }
 
-.low{
-  background:#2ecc71;
-}
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
 
-</style>
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
 
+    .card-icon svg {
+      width: 20px;
+      height: 20px;
+      color: var(--text-secondary);
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .card-description {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    /* Textarea */
+    textarea {
+      width: 100%;
+      height: 180px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      resize: vertical;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 16px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* File Upload */
+    .file-upload-wrapper {
+      position: relative;
+    }
+
+    .file-upload-area {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .file-upload-area:hover {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .file-upload-area.dragover {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .file-upload-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--bg-secondary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+
+    .file-upload-icon svg {
+      width: 24px;
+      height: 24px;
+      color: var(--text-secondary);
+    }
+
+    .file-upload-text {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      margin-bottom: 4px;
+    }
+
+    .file-upload-hint {
+      color: var(--text-muted);
+      font-size: 0.8125rem;
+    }
+
+    .file-upload-input {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .selected-file {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      margin-top: 12px;
+    }
+
+    .selected-file.show {
+      display: flex;
+    }
+
+    .selected-file svg {
+      width: 20px;
+      height: 20px;
+      color: var(--success);
+      flex-shrink: 0;
+    }
+
+    .selected-file-name {
+      flex: 1;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .selected-file-remove {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: color 0.2s ease;
+    }
+
+    .selected-file-remove:hover {
+      color: var(--danger);
+    }
+
+    /* Loading */
+    .loading-wrapper {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px;
+      margin-top: 24px;
+    }
+
+    .loading-wrapper.show {
+      display: flex;
+    }
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--border-color);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+    }
+
+    /* Results */
+    .result-container {
+      display: none;
+      margin-top: 32px;
+    }
+
+    .result-container.show {
+      display: block;
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .result-header-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--success), #10b981);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .result-header-icon svg {
+      width: 20px;
+      height: 20px;
+      color: white;
+    }
+
+    .result-header h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .result-section {
+      margin-bottom: 24px;
+    }
+
+    .result-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .result-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .result-value {
+      color: var(--text-primary);
+      font-size: 0.9375rem;
+      line-height: 1.7;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .badge-high {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .badge-medium {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-low {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .badge-high .badge-dot { background: #f87171; }
+    .badge-medium .badge-dot { background: #fbbf24; }
+    .badge-low .badge-dot { background: #4ade80; }
+
+    /* Recommendations */
+    .recommendations-list {
+      list-style: none;
+    }
+
+    .recommendations-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      font-size: 0.9375rem;
+    }
+
+    .recommendations-list li:last-child {
+      margin-bottom: 0;
+    }
+
+    .recommendations-list li::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 8px;
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 24px 0;
+    }
+
+    /* Dashboard Grid Layout */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .dashboard-grid-row {
+      display: contents;
+    }
+
+    .dashboard-cell {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      min-height: 0;
+    }
+
+    .dashboard-cell-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .dashboard-cell-value {
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    /* Row 2: Statistics spans 1, Patterns spans 2 */
+    .dashboard-cell.stats-cell {
+      grid-column: span 1;
+    }
+
+    .dashboard-cell.patterns-cell {
+      grid-column: span 2;
+    }
+
+    /* Row 3: Charts each span 1.5 (using span 3 total) */
+    .dashboard-cell.chart-cell {
+      grid-column: span 1;
+      padding: 16px;
+    }
+
+    .dashboard-cell.chart-cell:first-of-type {
+      grid-column: 1 / 2;
+    }
+
+    .dashboard-cell.chart-cell:last-of-type {
+      grid-column: 2 / 4;
+    }
+
+    /* Compact stats grid */
+    .compact-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .compact-stat {
+      background: var(--bg-card);
+      border-radius: 6px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .compact-stat-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .compact-stat-label {
+      font-size: 0.625rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
+
+    .compact-stat.danger .compact-stat-value { color: var(--danger); }
+    .compact-stat.warning .compact-stat-value { color: var(--warning); }
+
+    /* Compact patterns */
+    .compact-patterns {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+
+    .compact-pattern {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: var(--bg-card);
+      border-radius: 6px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.75rem;
+    }
+
+    .compact-pattern-text {
+      color: var(--text-primary);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-right: 10px;
+    }
+
+    .compact-pattern-count {
+      background: var(--bg-secondary);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    /* Chart cells */
+    .chart-wrapper {
+      position: relative;
+      height: 180px;
+    }
+
+    .chart-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    /* Recommendations in grid */
+    .compact-recommendations {
+      margin-top: 16px;
+    }
+
+    .compact-recommendations-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .compact-recommendations-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 10px;
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      font-size: 0.8125rem;
+    }
+
+    .compact-recommendations-list li::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      background: var(--accent);
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .dashboard-cell.stats-cell {
+        grid-column: span 1;
+      }
+
+      .dashboard-cell.patterns-cell {
+        grid-column: span 1;
+      }
+
+      .dashboard-cell.chart-cell:first-of-type,
+      .dashboard-cell.chart-cell:last-of-type {
+        grid-column: span 1;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dashboard-cell.stats-cell,
+      .dashboard-cell.patterns-cell,
+      .dashboard-cell.chart-cell:first-of-type,
+      .dashboard-cell.chart-cell:last-of-type {
+        grid-column: span 1;
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .container {
+        padding: 24px 16px;
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+      }
+
+      .card {
+        padding: 20px;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
 </head>
-
 <body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+        </svg>
+      </div>
+      <h1>AI Log Analyzer</h1>
+      <p>Intelligent log analysis powered by artificial intelligence</p>
+    </header>
 
-<h1>AI Log Analyzer</h1>
+    <!-- Paste Logs Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="card-title">Paste Logs</h3>
+          <p class="card-description">Paste your log content directly</p>
+        </div>
+      </div>
+      <textarea id="logs" placeholder="Paste your log content here...&#10;&#10;Example:&#10;[ERROR] 2024-01-15 10:23:45 - Connection timeout after 30s&#10;[WARN] 2024-01-15 10:23:46 - Retrying connection..."></textarea>
+      <button class="btn btn-primary" onclick="analyzeLogs()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+        </svg>
+        Analyze Logs
+      </button>
+    </div>
 
-<h3>Paste Logs</h3>
+    <!-- Upload File Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="card-title">Upload Log File</h3>
+          <p class="card-description">Upload a .log or .txt file</p>
+        </div>
+      </div>
+      <div class="file-upload-wrapper">
+        <div class="file-upload-area" id="dropZone">
+          <div class="file-upload-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+            </svg>
+          </div>
+          <p class="file-upload-text">Click to upload or drag and drop</p>
+          <p class="file-upload-hint">Supports .log, .txt files</p>
+          <input type="file" class="file-upload-input" id="fileInput" accept=".log,.txt">
+        </div>
+        <div class="selected-file" id="selectedFile">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="selected-file-name" id="fileName"></span>
+          <button class="selected-file-remove" onclick="clearFile()" title="Remove file">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="uploadFile()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+        </svg>
+        Analyze File
+      </button>
+    </div>
 
-<textarea id="logs"></textarea>
+    <!-- Loading State -->
+    <div class="loading-wrapper" id="loading">
+      <div class="spinner"></div>
+      <span class="loading-text" id="loadingText">Analyzing logs with AI...</span>
+    </div>
 
-<br>
+    <!-- Results -->
+    <div class="result-container" id="result">
+      <div class="card">
+        <div class="result-header">
+          <div class="result-header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2>Analysis Results</h2>
+        </div>
 
-<button onclick="analyzeLogs()">Analyze Logs</button>
+        <div id="resultContent"></div>
+      </div>
+    </div>
+  </div>
 
-<h3>Upload Log File</h3>
+  <script>
+    // File upload interactions
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const selectedFile = document.getElementById('selectedFile');
+    const fileName = document.getElementById('fileName');
 
-<input type="file" id="fileInput">
-<button onclick="uploadFile()">Analyze File</button>
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
 
-<div class="loading" id="loading"></div>
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
 
-<div class="result" id="result"></div>
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        showSelectedFile(e.dataTransfer.files[0].name);
+      }
+    });
 
-<script>
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) {
+        showSelectedFile(fileInput.files[0].name);
+      }
+    });
 
+    function showSelectedFile(name) {
+      fileName.textContent = name;
+      selectedFile.classList.add('show');
+    }
 
-async function analyzeLogs(){
+    function clearFile() {
+      fileInput.value = '';
+      selectedFile.classList.remove('show');
+    }
 
-    const logs = document.getElementById("logs").value
+    // API Functions
+    async function analyzeLogs() {
+      const logs = document.getElementById("logs").value;
+      if (!logs.trim()) {
+        alert('Please paste some logs to analyze');
+        return;
+      }
 
-    document.getElementById("loading").innerText = "Analyzing logs with AI..."
+      showLoading("Analyzing logs with AI...");
 
-    const response = await fetch("/analyze",{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
+      try {
+        const response = await fetch("/analyze", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ logs })
+        });
+
+        const data = await response.json();
+        hideLoading();
+        renderResult(data);
+      } catch (error) {
+        hideLoading();
+        alert('Error analyzing logs. Please try again.');
+      }
+    }
+
+    async function uploadFile() {
+      const fileInput = document.getElementById("fileInput");
+      if (!fileInput.files.length) {
+        alert('Please select a file to upload');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      showLoading("Analyzing file...");
+
+      try {
+        const response = await fetch("/analyze-file", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.json();
+        hideLoading();
+        renderResult(data);
+      } catch (error) {
+        hideLoading();
+        alert('Error analyzing file. Please try again.');
+      }
+    }
+
+    function showLoading(text) {
+      document.getElementById("loading").classList.add("show");
+      document.getElementById("loadingText").textContent = text;
+      document.getElementById("result").classList.remove("show");
+    }
+
+    function hideLoading() {
+      document.getElementById("loading").classList.remove("show");
+    }
+
+    function severityBadge(level) {
+      if (!level) return "";
+      const l = level.toLowerCase();
+      if (l === "high") return `<span class="badge badge-high"><span class="badge-dot"></span>High</span>`;
+      if (l === "medium") return `<span class="badge badge-medium"><span class="badge-dot"></span>Medium</span>`;
+      if (l === "low") return `<span class="badge badge-low"><span class="badge-dot"></span>Low</span>`;
+      return level;
+    }
+
+    function renderResult(data) {
+      const resultContainer = document.getElementById("result");
+      const resultContent = document.getElementById("resultContent");
+
+      resultContent.innerHTML = `
+        <div class="dashboard-grid">
+          <!-- Row 1: Summary | Root Cause | Severity -->
+          <div class="dashboard-cell">
+            <div class="dashboard-cell-label">Summary</div>
+            <div class="dashboard-cell-value">${data.summary || 'No summary available'}</div>
+          </div>
+          <div class="dashboard-cell">
+            <div class="dashboard-cell-label">Root Cause</div>
+            <div class="dashboard-cell-value">${data.root_cause || 'Unable to determine root cause'}</div>
+          </div>
+          <div class="dashboard-cell">
+            <div class="dashboard-cell-label">Severity</div>
+            <div class="dashboard-cell-value">${severityBadge(data.severity)}</div>
+          </div>
+
+          <!-- Row 2: Statistics | Detected Patterns -->
+          <div class="dashboard-cell stats-cell">
+            <div class="dashboard-cell-label">Statistics</div>
+            <div class="compact-stats">
+              <div class="compact-stat danger">
+                <div class="compact-stat-value">${data.error_count ?? 0}</div>
+                <div class="compact-stat-label">Errors</div>
+              </div>
+              <div class="compact-stat warning">
+                <div class="compact-stat-value">${data.warning_count ?? 0}</div>
+                <div class="compact-stat-label">Warnings</div>
+              </div>
+              <div class="compact-stat">
+                <div class="compact-stat-value">${data.timeout_count ?? 0}</div>
+                <div class="compact-stat-label">Timeouts</div>
+              </div>
+              <div class="compact-stat">
+                <div class="compact-stat-value">${data.error_rate ?? '0%'}</div>
+                <div class="compact-stat-label">Error Rate</div>
+              </div>
+            </div>
+          </div>
+          <div class="dashboard-cell patterns-cell">
+            <div class="dashboard-cell-label">Detected Patterns</div>
+            ${(data.patterns && data.patterns.length) ? `
+            <div class="compact-patterns">
+              ${data.patterns.map(p => `
+                <div class="compact-pattern">
+                  <span class="compact-pattern-text">${p.pattern}</span>
+                  <span class="compact-pattern-count">${p.occurrences} occurrences</span>
+                </div>
+              `).join("")}
+            </div>
+            ` : '<div class="dashboard-cell-value">No patterns detected</div>'}
+          </div>
+
+          <!-- Row 3: Bar Chart | Pie Chart -->
+          <div class="dashboard-cell chart-cell">
+            <div class="chart-title">Errors vs Warnings vs Timeouts</div>
+            <div class="chart-wrapper">
+              <canvas id="barChart"></canvas>
+            </div>
+          </div>
+          <div class="dashboard-cell chart-cell">
+            <div class="chart-title">Log Distribution</div>
+            <div class="chart-wrapper">
+              <canvas id="pieChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        ${(data.recommendations && data.recommendations.length) ? `
+        <div class="compact-recommendations">
+          <div class="dashboard-cell-label">Recommendations</div>
+          <ul class="compact-recommendations-list">
+            ${data.recommendations.map(r => `<li>${r}</li>`).join("")}
+          </ul>
+        </div>
+        ` : ''}
+      `;
+
+      resultContainer.classList.add("show");
+      resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      // Render dashboard charts
+      renderDashboardCharts(data);
+    }
+
+    // Chart instances
+    let barChartInstance = null;
+    let pieChartInstance = null;
+
+    function renderDashboardCharts(data) {
+      // Get data values
+      const errorCount = data.error_count ?? 0;
+      const warningCount = data.warning_count ?? 0;
+      const timeoutCount = data.timeout_count ?? 0;
+
+      // Chart colors matching the theme
+      const colors = {
+        danger: '#ef4444',
+        dangerBg: 'rgba(239, 68, 68, 0.2)',
+        warning: '#f59e0b',
+        warningBg: 'rgba(245, 158, 11, 0.2)',
+        timeout: '#3b82f6',
+        timeoutBg: 'rgba(59, 130, 246, 0.2)',
+        border: '#2a2a30',
+        text: '#a0a0a8',
+        textMuted: '#6a6a72'
+      };
+
+      // Destroy existing charts if they exist
+      if (barChartInstance) {
+        barChartInstance.destroy();
+      }
+      if (pieChartInstance) {
+        pieChartInstance.destroy();
+      }
+
+      // Bar Chart
+      const barCtx = document.getElementById('barChart').getContext('2d');
+      barChartInstance = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Errors', 'Warnings', 'Timeouts'],
+          datasets: [{
+            label: 'Count',
+            data: [errorCount, warningCount, timeoutCount],
+            backgroundColor: [colors.dangerBg, colors.warningBg, colors.timeoutBg],
+            borderColor: [colors.danger, colors.warning, colors.timeout],
+            borderWidth: 2,
+            borderRadius: 6,
+            borderSkipped: false
+          }]
         },
-        body: JSON.stringify({logs})
-    })
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: '#1a1a1f',
+              titleColor: '#fafafa',
+              bodyColor: '#a0a0a8',
+              borderColor: '#2a2a30',
+              borderWidth: 1,
+              cornerRadius: 8,
+              padding: 12
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                color: colors.text,
+                font: {
+                  size: 12
+                }
+              },
+              border: {
+                color: colors.border
+              }
+            },
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: colors.border,
+                drawBorder: false
+              },
+              ticks: {
+                color: colors.textMuted,
+                font: {
+                  size: 11
+                },
+                stepSize: 1
+              },
+              border: {
+                display: false
+              }
+            }
+          }
+        }
+      });
 
-    const data = await response.json()
-
-    document.getElementById("loading").innerText = ""
-
-    renderResult(data)
-
-}
-
-
-async function uploadFile(){
-
-    const fileInput = document.getElementById("fileInput")
-
-    const formData = new FormData()
-
-    formData.append("file", fileInput.files[0])
-
-    document.getElementById("loading").innerText = "Analyzing file..."
-
-    const response = await fetch("/analyze-file",{
-        method:"POST",
-        body: formData
-    })
-
-    const data = await response.json()
-
-    document.getElementById("loading").innerText = ""
-
-    renderResult(data)
-
-}
-
-
-function severityBadge(level){
-
-  if(!level) return ""
-
-  const l = level.toLowerCase()
-
-  if(l === "high") return `<span class="badge high">HIGH</span>`
-  if(l === "medium") return `<span class="badge medium">MEDIUM</span>`
-  if(l === "low") return `<span class="badge low">LOW</span>`
-
-  return level
-}
-
-
-function renderResult(data){
-
-document.getElementById("result").innerHTML = `
-
-<h2>AI Analysis</h2>
-
-<b>Summary:</b>
-<p>${data.summary}</p>
-
-<b>Root Cause:</b>
-<p>${data.root_cause}</p>
-
-<b>Severity:</b>
-<p>${severityBadge(data.severity)}</p>
-
-<b>Recommendations:</b>
-<ul>
-${(data.recommendations || []).map(r => `<li>${r}</li>`).join("")}
-</ul>
-
-<hr>
-
-<h2>Statistics</h2>
-
-<p>Error Count: ${data.error_count}</p>
-<p>Warning Count: ${data.warning_count}</p>
-<p>Timeout Count: ${data.timeout_count}</p>
-<p>Error Rate: ${data.error_rate}</p>
-
-<hr>
-
-<h2>Patterns</h2>
-
-<ul>
-${(data.patterns || []).map(p => `<li>${p.pattern} (${p.occurrences})</li>`).join("")}
-</ul>
-
-`
-}
-
-</script>
-
+      // Pie Chart
+      const pieCtx = document.getElementById('pieChart').getContext('2d');
+      const total = errorCount + warningCount + timeoutCount;
+      
+      pieChartInstance = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Errors', 'Warnings', 'Timeouts'],
+          datasets: [{
+            data: total > 0 ? [errorCount, warningCount, timeoutCount] : [1, 1, 1],
+            backgroundColor: [colors.danger, colors.warning, colors.timeout],
+            borderColor: '#1a1a1f',
+            borderWidth: 3,
+            hoverOffset: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '60%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: colors.text,
+                padding: 16,
+                usePointStyle: true,
+                pointStyle: 'circle',
+                font: {
+                  size: 12
+                }
+              }
+            },
+            tooltip: {
+              backgroundColor: '#1a1a1f',
+              titleColor: '#fafafa',
+              bodyColor: '#a0a0a8',
+              borderColor: '#2a2a30',
+              borderWidth: 1,
+              cornerRadius: 8,
+              padding: 12,
+              callbacks: {
+                label: function(context) {
+                  if (total === 0) return 'No data';
+                  const value = context.raw;
+                  const percentage = ((value / total) * 100).toFixed(1);
+                  return `${context.label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
 </body>
 </html>
