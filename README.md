@@ -10,6 +10,8 @@ The project runs locally using **Flask + Ollama + Phi-3 Mini**.
 
 ------------------------------------------------------------------------
 
+![Image](https://github.com/user-attachments/assets/65e0124c-ae7f-4ffc-8f7f-ad2f1d99c490)
+
 ## Features
 
 -   Log parsing and pattern detection
