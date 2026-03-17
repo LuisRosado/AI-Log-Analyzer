@@ -8,11 +8,9 @@ a local LLM to generate root cause analysis and recommendations.
 
 The project runs locally using **Flask + Ollama + Phi-3 Mini**.
 
-------------------------------------------------------------------------
+![Image](https://github.com/user-attachments/assets/952b1de4-e9c0-4689-98d1-094b7091f823)
 
-<p align="center">
-  ![Image](https://github.com/user-attachments/assets/952b1de4-e9c0-4689-98d1-094b7091f823)
-</p>
+------------------------------------------------------------------------
 
 ## Features
 
